@@ -93,6 +93,10 @@ localhost:8080/chats/{id}
 Пример: localhost:8080/chats/1
 ```
 
+``
+Ответ возвращается в формате JSON: id, []messages
+``
+
 ### **Удалить чат:**
 Метод DELETE
 ```
