@@ -5,15 +5,15 @@
 
 1. [Общее описание](#Общее%20описание)
     
-3. [Технический стек](#технический-стек)
+2. [Технический стек](#технический-стек)
     
-4. [Установка и запуск](#установка-и-запуск)
+3. [Установка и запуск](#установка-и-запуск)
     
-5. API Endpoints
-	
-6. Структура проекта
+4. [API Endpoints](#api-endpoints)
     
-7. Разработка
+5. [Тестирование](#тестирование)
+
+6. [Способы связи](#способы-связи)
 
 ---
 
@@ -47,143 +47,102 @@
 
 #### 1. **Клонирование репозитория**
    ```bash
-   git clone https://github.com/logd4n/cookbook.git
+   git clone https://github.com/logd4n/job-test.git
 
-   cd cookbook
+   cd job-test
    ```
 
-#### 2. **Настройка базы данных**
-   ```sql
-   CREATE DATABASE cookbook;
-   CREATE TABLE recipes (
-       id SERIAL PRIMARY KEY,
-       name TEXT NOT NULL,
-       category TEXT NOT NULL,
-       ingredients TEXT[] NOT NULL,
-       instructions TEXT NOT NULL,
-       );
-   ```
-
-#### 3. **Настройка окружения**
-
-   #### 3.1 **Dockerfile (можно не настраивать)**
-   
-   Образ с Go 1.22.4+. В проекте я использовал образ golang:1.22.4-alpine для экономии памяти.
-
-   Рабочая директория:
-   ```Dockerfile
-   WORKDIR /app <-- можно использовать свой каталог 
-   ``` 
-
-   Компиляция, выдача прав и запуск:
-   ```Dockerfile
-   RUN CGO_ENABLED=0 go build -ldflags="-w -s" -o cookbook ./cmd/main.go
-   RUN chmod +x cookbook
-   CMD ["./cookbook"]
-   ```
-   `Можете изменить название исполняемого файла`
-
-   #### 3.2 **docker-compose**
-
-   Убираем "(example)" из имени файла:
-   ```
-   docker-compose (example).yml --> docker-compose.yml
-   ```
-   #### а. Настраиваем сервис БД
-   Задаем имя сервиса:
-   ```yml
-   database: #можно указать своё
-   ```
-   Выбираем образ:
-   ```yml
-   image: postgres:15
-
-   postgres #Имя образа БД
-   15 #Версия
-   ```
-
-   ``В проекте используется postgres:17.5``
-
-   Настраиваем окружение:
-   ```yml
-   environment:
-      POSTGRES_USER: username #указываем имя пользователя для работы с БД
-      POSTGRES_PASSWORD: 1234567890 #пароль для доступа к БД
-      POSTGRES_DB: test #имя БД 
-   ```
-
-   Указываем порты для соединения (хост:контейнер):
-   ```yml
-   ports:
-      - "0000:0000" #Стандартный порт - 5432 (5432:5432)
-   ```
-
-   Указываем том для сохранения данных:
-   ```yml
-   volumes:
-      - postgres_data:/var/lib/postgresql/data
-   ```
-
-   ``В файле уже указан данный путь, поэтому не меняем.``
-
-   #### b. Настраиваем сервис веб-приложения
-
-   Задаем имя сервиса:
-   ```yml
-   app: #можно указать своё
-   ```
-   Выбираем образ:
-   ```yml
-   image: app:1.0
-
-   app #Имя образа веб-приложения
-   1.0 #Тэг (версия)
-   ```
-
-   Настраиваем автосборку:
-   ```yml
-   build: .
-   ```
-
-   Указываем порты для работы (хост:контейнер):
-   ```yml
-   ports:
-      - "0000:0000" #Стандартный порт - 8080 (8080:8080)
-   ```
-
-   Настраиваем окружение:
-   ```yml
-   environment:
-      APP_VERSION: 1.0.0 #версия приложения
-      SERVER_ADDR: 192.168.0.2:0000 #указываем адрес хоста и порт
-      DB_USER: username #указываем имя пользователя для работы с БД
-      DB_NAME: test #имя БД
-      DB_PASS: 1234567890 #пароль для доступа к БД
-      DB_HOST: database #указываем название сервиса БД
-      DB_PORT: 0000 #указываем порт, на котром работает сервис БД (хост:контейнер)
-      DB_SSLMODE: disable #выбираем SSL-мод
-   ```
-
-   Настраиваем запуск веб-приложения после запуска БД:
-   ```yml
-   depends_on:
-      - database #имя сервиса БД
-   ```
-
-   #### c. Настраиваем тома для хранения данных
-   
-   ```yml
-   volumes:
-      postgres_data: #имя тома БД
-   ```
-
-   #### <br>4. **Запуск сервера**</br>
-   
+#### <br>2. **Запуск сервера**</br>
+   Так как Dockerfile и docker-compose уже настроены, Вам нужно выполнить только запуск сервера:
    ```bash
    docker-compose up -d --build
    ```
+---
 
-   #### <br>5. **Доступ к приложению**</br>
-   - Локально: http://localhost:8080
-   - В сети: http://[ваш-ip]:8080
+## API Endpoints
 
+Для взаимодействия с приложением необходимо отправлять HTTP-запросы на определенные URI.
+
+### **Создать чат:**
+Метод POST
+```
+localhost:8080/chats
+```
+
+``
+Тело запроса должно содержать название будущего чата
+``
+
+### **Отправить сообщение в чат:**
+Метод POST
+```
+localhost:8080/chats/{id}/message
+
+Пример: localhost:8080/chats/1/message
+```
+
+``
+Тело запроса должно включать в себя всё содержимое сообщения
+``
+
+### **Получить чат и последние N сообщений:**
+Метод GET
+```
+localhost:8080/chats/{id}
+
+Пример: localhost:8080/chats/1
+```
+
+### **Удалить чат:**
+Метод DELETE
+```
+localhost:8080/chats/{id}
+
+Пример: localhost:8080/chats/1
+```
+
+``
+Вместе с чатом удалятся все его сообщения 
+``
+
+---
+
+## Тестирование
+Для теста используется httptest.
+Были созданы небольшой обработчик и файл, тестирующий этот обработчик.
+
+``handler_test.go:``
+```go
+func TestHelloHandler(t *testing.T) {
+	// Создаем HTTP запрос
+	req := httptest.NewRequest("GET", "/hello", nil)
+
+	// Создаем ResponseRecorder (записываем ответ)
+	rr := httptest.NewRecorder()
+
+	// Вызываем обработчик напрямую
+	server.HelloHandler(rr, req)
+
+	// Проверяем статус-код
+	if rr.Code != http.StatusOK {
+		t.Errorf("Ожидался статус код %v, а получили %v", http.StatusOK, rr.Code)
+	}
+}
+```
+
+``handlers.go``
+```go
+func HelloHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Метод "+r.Method+" не поддерживается!", http.StatusMethodNotAllowed)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+```
+---
+
+## **Способы связи:**
+ - **Telegram:** @logd4n
+ - **VK:** @logd4n
